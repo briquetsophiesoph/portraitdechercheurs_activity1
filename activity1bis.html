@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Vrai ou Faux — SHS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f6fb; color: #1a1a2e; }
+  
+  .header { background: #2C3E72; color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 1rem; margin-bottom: 2px; }
+  .header .sub { font-size: .8rem; opacity: .85; }
+  .header .badge { margin-left: auto; background: rgba(255,255,255,.2); border-radius: 20px; padding: 4px 12px; font-size: .78rem; white-space: nowrap; }
+
+  .main { max-width: 680px; margin: 20px auto; padding: 0 14px; }
+
+  .dots { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .dot { width: 24px; height: 8px; border-radius: 4px; background: #dde3f0; }
+  .dot.active { background: #2C3E72; }
+  .dot.done { background: #1E7A45; }
+
+  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.08); margin-bottom: 16px; }
+
+  .q-num { font-weight: bold; color: #2C3E72; font-size: .9rem; margin-bottom: 12px; }
+  .quote { font-style: italic; background: #eef1f9; border-left: 3px solid #2C3E72; border-radius: 5px; padding: 10px 14px; margin-bottom: 12px; color: #2C3E72; font-size: .9rem; }
+  .q-text { font-size: 1rem; font-weight: bold; margin-bottom: 16px; }
+
+  .btns { display: flex; gap: 12px; }
+  .btn-vf { padding: 11px 28px; border-radius: 8px; border: 2px solid #2C3E72; background: #fff; font-size: .95rem; font-weight: bold; cursor: pointer; }
+  .btn-vf:hover { background: #2C3E72; color: #fff; }
+  .btn-vf:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-vf.vert { background: #1E7A45; border-color: #1E7A45; color: #fff; }
+  .btn-vf.rouge { background: #8B2020; border-color: #8B2020; color: #fff; }
+
+  .feedback { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 8px; font-size: .88rem; line-height: 1.6; }
+  .feedback.ok { background: #edf7f1; border-left: 4px solid #1E7A45; color: #145230; }
+  .feedback.ko { background: #fdf0f0; border-left: 4px solid #8B2020; color: #5c1515; }
+
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+  .count { font-size: .82rem; color: #888; }
+  .btn-next { background: #2C3E72; color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: .9rem; font-weight: bold; cursor: pointer; display: none; }
+  .btn-next:hover { background: #1e2c55; }
+
+  .score-card { background: #fff; border-radius: 10px; padding: 36px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: none; }
+  .score-circle { width: 100px; height: 100px; border-radius: 50%; border: 5px solid #2C3E72; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; gap: 3px; }
+  .score-n { font-size: 2.2rem; font-weight: 800; color: #2C3E72; }
+  .score-l { font-size: .9rem; color: #888; align-self: flex-end; margin-bottom: 6px; }
+  .score-card h2 { margin-bottom: 8px; font-size: 1.1rem; }
+  .score-card p { color: #555; margin-bottom: 18px; }
+  .btn-replay { background: #2C3E72; color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-size: .9rem; font-weight: bold; cursor: pointer; }
+
+  .banner { display: none; background: #1E7A45; color: #fff; border-radius: 8px; padding: 12px 18px; text-align: center; font-weight: bold; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span style="font-size:1.8rem">📚</span>
+  <div>
+    <h1>Module 1 — Qui est chercheur en SHS ?</h1>
+    <div class="sub">Activité 1.1 — Quiz Vrai ou Faux</div>
+  </div>
+  <div class="badge">🏅 Badge : Curieux</div>
+</div>
+
+<div class="main">
+  <div class="banner" id="banner">✅ Activité complétée !</div>
+  <div class="dots" id="dots"></div>
+
+  <div class="card" id="quiz-card">
+    <div class="q-num" id="q-num">Question 1 / 10</div>
+    <div class="quote" id="q-quote"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="btns">
+      <button class="btn-vf" id="btn-v" onclick="answer(true)">✅ VRAI</button>
+      <button class="btn-vf" id="btn-f" onclick="answer(false)">❌ FAUX</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <div class="nav">
+      <span class="count" id="count">0 / 10 répondues</span>
+      <button class="btn-next" id="btn-next" onclick="next()">Suivant →</button>
+    </div>
+  </div>
+
+  <div class="score-card" id="score-card">
+    <div class="score-circle">
+      <span class="score-n" id="score-n">0</span>
+      <span class="score-l">/ 10</span>
+    </div>
+    <h2 id="score-title"></h2>
+    <p id="score-msg"></p>
+    <button class="btn-replay" onclick="restart()">🔄 Rejouer</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  { quote:'"La recherche en SHS, ce n\'est pas vraiment scientifique."',
+    text:'Les sciences humaines et sociales ne sont pas considérées comme des sciences.',
+    answer:false, feedback:'FAUX. Les SHS sont des disciplines scientifiques à part entière, avec des méthodes rigoureuses : enquêtes, corpus, ethnographie, modélisation, archives. Elles sont reconnues par le CNRS, l\'ANR et les grandes agences de recherche internationales.' },
+  { quote:'"Un linguiste, ça ne fait qu\'analyser des fautes de grammaire."',
+    text:'La linguistique se limite à l\'étude de la grammaire normative.',
+    answer:false, feedback:'FAUX. La linguistique couvre des domaines très variés : phonétique, sémantique, sociolinguistique, pragmatique, linguistique computationnelle, neurolinguistique, acquisition du langage, dialectologie…' },
+  { quote:'"En SHS, on peut faire une thèse financée."',
+    text:'Il est possible d\'obtenir un financement pour une thèse en sciences humaines et sociales.',
+    answer:true, feedback:'VRAI. Des contrats doctoraux existent dans les universités, à l\'EHESS, au CNRS (SHS), à l\'INED. Des bourses ANR, CIFRE en SHS, ou régionales financent également des thèses.' },
+  { quote:'"Un sociologue ne peut travailler qu\'à l\'université."',
+    text:'Les chercheurs en sociologie travaillent uniquement dans le monde académique.',
+    answer:false, feedback:'FAUX. Les sociologues travaillent dans les instituts de sondage (IFOP, BVA), les collectivités territoriales, les ONG, les ministères, les cabinets de conseil RH, les entreprises, les musées ou les médias.' },
+  { quote:'"La linguistique computationnelle, c\'est la même chose que l\'IA."',
+    text:'Linguistique computationnelle et intelligence artificielle sont deux disciplines identiques.',
+    answer:false, feedback:'FAUX, mais elles sont très proches ! La linguistique computationnelle modélise formellement le langage humain ; l\'IA est un ensemble de techniques d\'apprentissage. Le TAL/NLP est à leur intersection.' },
+  { quote:'"En histoire, on ne produit que des connaissances sur le passé."',
+    text:'Les recherches historiques n\'ont d\'utilité que pour comprendre le passé.',
+    answer:false, feedback:'FAUX. L\'histoire sert à comprendre le présent, à déconstruire les mythes, à éclairer les politiques publiques et les mémoires collectives.' },
+  { quote:'"La thèse en SHS est toujours plus courte qu\'en sciences exactes."',
+    text:'Une thèse en sciences humaines dure moins longtemps qu\'une thèse en sciences expérimentales.',
+    answer:false, feedback:'FAUX. Une thèse en SHS dure en moyenne 4 à 6 ans, souvent plus qu\'en sciences expérimentales (3 à 4 ans).' },
+  { quote:'"Les chercheurs en anthropologie passent leur temps en terrain exotique."',
+    text:'L\'anthropologie se pratique uniquement dans des sociétés lointaines ou "exotiques".',
+    answer:false, feedback:'FAUX. L\'anthropologie contemporaine s\'applique aussi aux sociétés occidentales : organisations, pratiques numériques, hôpitaux, banlieues… Le "terrain" peut être au coin de la rue.' },
+  { quote:'"Une chercheuse en psychologie sociale fait forcément des expériences en labo."',
+    text:'La psychologie sociale repose uniquement sur des expériences en laboratoire.',
+    answer:false, feedback:'FAUX. La psychologie sociale utilise de nombreuses méthodes : expériences de terrain, questionnaires, entretiens, observations naturalistes, analyses de données numériques.' },
+  { quote:'"Il faut savoir plusieurs langues étrangères pour faire de la recherche en linguistique."',
+    text:'La connaissance de plusieurs langues étrangères est un atout majeur pour un chercheur en linguistique.',
+    answer:true, feedback:'VRAI. Connaître plusieurs langues permet de comprendre la diversité des structures linguistiques et d\'accéder aux corpus et littératures internationales.' },
+];
+
+let cur = 0, score = 0, done = 0;
+
+function buildDots() {
+  document.getElementById('dots').innerHTML = questions.map((_,i) =>
+    '<div class="dot" id="d'+i+'"></div>').join('');
+}
+function updDots() {
+  questions.forEach((_,i) => {
+    const d = document.getElementById('d'+i);
+    d.className = 'dot' + (i < cur ? ' done' : i === cur ? ' active' : '');
+  });
+}
+function load(i) {
+  const q = questions[i];
+  document.getElementById('q-num').textContent = 'Question '+(i+1)+' / '+questions.length;
+  document.getElementById('q-quote').textContent = q.quote;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('btn-v').className = 'btn-vf';
+  document.getElementById('btn-f').className = 'btn-vf';
+  document.getElementById('btn-v').disabled = false;
+  document.getElementById('btn-f').disabled = false;
+  document.getElementById('btn-next').style.display = 'none';
+  document.getElementById('feedback').style.display = 'none';
+  updDots();
+}
+function answer(val) {
+  const q = questions[cur];
+  const ok = val === q.answer;
+  if (ok) score++;
+  done++;
+  document.getElementById('btn-v').disabled = true;
+  document.getElementById('btn-f').disabled = true;
+  if (val === true)  document.getElementById('btn-v').className = 'btn-vf ' + (ok ? 'vert' : 'rouge');
+  if (val === false) document.getElementById('btn-f').className = 'btn-vf ' + (ok ? 'vert' : 'rouge');
+  if (q.answer === true  && val !== true)  document.getElementById('btn-v').className = 'btn-vf vert';
+  if (q.answer === false && val !== false) document.getElementById('btn-f').className = 'btn-vf vert';
+  const fb = document.getElementById('feedback');
+  fb.textContent = (ok ? '✅ Correct ! ' : '❌ Incorrect. ') + q.feedback;
+  fb.className = 'feedback ' + (ok ? 'ok' : 'ko');
+  fb.style.display = 'block';
+  document.getElementById('count').textContent = done + ' / ' + questions.length + ' répondues';
+  const bn = document.getElementById('btn-next');
+  bn.style.display = 'inline-block';
+  bn.textContent = cur < questions.length - 1 ? 'Question suivante →' : 'Voir le résultat →';
+}
+function next() {
+  if (cur < questions.length - 1) { cur++; load(cur); }
+  else showScore();
+}
+function showScore() {
+  document.getElementById('quiz-card').style.display = 'none';
+  document.getElementById('score-card').style.display = 'block';
+  document.getElementById('score-n').textContent = score;
+  document.getElementById('score-title').textContent = score >= 7 ? '🎉 Excellent ! Badge Curieux débloqué !' : '📚 Bon début ! Quelques idées reçues à revoir.';
+  document.getElementById('score-msg').textContent = 'Vous avez ' + score + '/10 bonnes réponses.';
+  document.getElementById('banner').style.display = 'block';
+}
+function restart() {
+  cur = 0; score = 0; done = 0;
+  document.getElementById('quiz-card').style.display = 'block';
+  document.getElementById('score-card').style.display = 'none';
+  document.getElementById('banner').style.display = 'none';
+  document.getElementById('count').textContent = '0 / 10 répondues';
+  buildDots(); load(0);
+}
+buildDots(); load(0);
+</script>
+</body>
+</html>

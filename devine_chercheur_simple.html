@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Devine le chercheur SHS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f6fb; color: #1a1a2e; }
+
+  .header { background: #2C3E72; color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 1rem; margin-bottom: 2px; }
+  .header .sub { font-size: .8rem; opacity: .85; }
+  .header .badge { margin-left: auto; background: rgba(255,255,255,.2); border-radius: 20px; padding: 4px 12px; font-size: .78rem; white-space: nowrap; }
+
+  .main { max-width: 680px; margin: 20px auto; padding: 0 14px; }
+
+  .dots { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .dot { width: 24px; height: 8px; border-radius: 4px; background: #dde3f0; }
+  .dot.active { background: #2C3E72; }
+  .dot.done { background: #1E7A45; }
+
+  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.08); margin-bottom: 16px; }
+  .card-title { font-weight: bold; color: #2C3E72; font-size: .9rem; margin-bottom: 10px; }
+
+  .hint-item { background: #eef1f9; border-left: 4px solid #2C3E72; border-radius: 5px; padding: 10px 14px; font-size: .9rem; margin-bottom: 8px; }
+  .hint-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #2C3E72; font-weight: bold; margin-bottom: 3px; }
+
+  .hint-info { font-size: .8rem; color: #888; }
+
+  .choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .choice-card { background: #fff; border: 2px solid #ddd; border-radius: 10px; padding: 14px; cursor: pointer; text-align: center; font-size: .85rem; }
+  .choice-card:hover { border-color: #2C3E72; background: #eef1f9; }
+  .choice-card.correct { border-color: #1E7A45; background: #edf7f1; color: #145230; }
+  .choice-card.incorrect { border-color: #8B2020; background: #fdf0f0; color: #5c1515; }
+  .choice-card.disabled { pointer-events: none; }
+
+  .feedback { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 8px; font-size: .88rem; line-height: 1.6; }
+  .feedback.ok { background: #edf7f1; border-left: 4px solid #1E7A45; color: #145230; }
+  .feedback.ko { background: #fdf0f0; border-left: 4px solid #8B2020; color: #5c1515; }
+
+  .reveal-box { background: #2C3E72; color: #fff; border-radius: 10px; padding: 20px; margin-top: 14px; display: none; }
+  .reveal-box.active { display: block; }
+  .reveal-icon { font-size: 2rem; margin-bottom: 6px; }
+  .reveal-name { font-weight: bold; font-size: 1rem; margin-bottom: 8px; }
+  .reveal-bio { font-size: .88rem; opacity: .9; line-height: 1.65; }
+
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; gap: 10px; }
+  .btn-hint { background: #fff; color: #2C3E72; border: 2px solid #2C3E72; border-radius: 8px; padding: 10px 18px; font-size: .88rem; font-weight: bold; cursor: pointer; }
+  .btn-hint:hover { background: #eef1f9; }
+  .btn-next { background: #2C3E72; color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: .88rem; font-weight: bold; cursor: pointer; display: none; }
+  .btn-next:hover { background: #1e2c55; }
+
+  .score-card { background: #fff; border-radius: 10px; padding: 36px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: none; }
+  .score-circle { width: 110px; height: 110px; border-radius: 50%; border: 5px solid #2C3E72; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; gap: 4px; }
+  .score-n { font-size: 2.2rem; font-weight: 800; color: #2C3E72; }
+  .score-l { font-size: .9rem; color: #888; align-self: flex-end; margin-bottom: 8px; }
+  .score-card h2 { margin-bottom: 8px; font-size: 1.1rem; }
+  .score-card p { color: #555; margin-bottom: 18px; }
+  .btn-replay { background: #2C3E72; color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-size: .9rem; font-weight: bold; cursor: pointer; }
+
+  .banner { display: none; background: #1E7A45; color: #fff; border-radius: 8px; padding: 12px 18px; text-align: center; font-weight: bold; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span style="font-size:1.8rem">🕵️</span>
+  <div>
+    <h1>Module 1 — Qui est chercheur en SHS ?</h1>
+    <div class="sub">Activité 1.2 — Devine le chercheur SHS</div>
+  </div>
+  <div class="badge" id="pts-disp">🏆 0 pts</div>
+</div>
+
+<div class="main">
+  <div class="banner" id="banner">✅ Activité complétée !</div>
+  <div class="dots" id="dots"></div>
+
+  <div class="card" id="game-card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+      <div class="card-title" id="prof-num">Profil 1 / 5</div>
+      <span class="hint-info" id="hint-info"></span>
+    </div>
+    <p style="font-size:.87rem; color:#555; margin-bottom:12px;">Les indices apparaissent un à un. Devinez le profil avant d'en voir trop — plus vite vous trouvez, plus vous gagnez de points !</p>
+
+    <div id="hints-list"></div>
+    <div class="feedback" id="fb-guess"></div>
+
+    <div id="choices-area">
+      <p style="font-weight:bold; font-size:.9rem; margin-bottom:8px;">Quelle est la spécialité de ce chercheur ?</p>
+      <div class="choices-grid" id="choices-grid"></div>
+    </div>
+
+    <div class="reveal-box" id="reveal-box">
+      <div class="reveal-icon" id="rev-icon"></div>
+      <div class="reveal-name" id="rev-name"></div>
+      <div class="reveal-bio" id="rev-bio"></div>
+    </div>
+
+    <div class="nav">
+      <button class="btn-hint" id="btn-hint" onclick="showHint()">💡 Indice suivant</button>
+      <button class="btn-next" id="btn-next" onclick="nextProfile()">Profil suivant →</button>
+    </div>
+  </div>
+
+  <div class="score-card" id="score-card">
+    <div class="score-circle">
+      <span class="score-n" id="final-pts">0</span>
+      <span class="score-l">pts</span>
+    </div>
+    <h2 id="res-title"></h2>
+    <p id="res-msg"></p>
+    <button class="btn-replay" onclick="restart()">🔄 Rejouer</button>
+  </div>
+</div>
+
+<script>
+var profiles = [
+  { name:"Dr. Amina Traoré", domain:"Sociolinguistique", icon:"🗣️",
+    hints:[
+      {l:"Domaine", t:"Elle étudie comment le langage varie selon les groupes sociaux, les générations et les territoires."},
+      {l:"Terrain", t:"Elle a passé 18 mois dans une banlieue parisienne à enregistrer et transcrire les paroles de jeunes locuteurs."},
+      {l:"Méthode", t:"Elle analyse des corpus oraux et étudie des phénomènes comme le verlan, les alternances de codes et les parlers mixtes."},
+      {l:"Organisme", t:"Elle est chargée de recherche au CNRS, rattachée au laboratoire Structures Formelles du Langage."},
+      {l:"Enjeu", t:"Ses recherches alimentent des politiques d'éducation et de lutte contre les discriminations linguistiques."}
+    ],
+    choices:["Sociolinguistique","Archéologie médiévale","Économétrie","Psychologie cognitive"],
+    answer:"Sociolinguistique",
+    bio:"Chargée de recherche CNRS en sociolinguistique, Amina est spécialiste des parlers plurilingues et des identités linguistiques urbaines. Ses travaux combinent ethnographie du langage et analyse de corpus."
+  },
+  { name:"Prof. Jean-Baptiste Moreau", domain:"Histoire contemporaine", icon:"📜",
+    hints:[
+      {l:"Domaine", t:"Il étudie des événements survenus au XXe siècle, à partir de sources primaires rarement consultées."},
+      {l:"Terrain", t:"Il a consulté des archives déclassifiées dans cinq pays européens et aux Archives nationales."},
+      {l:"Publications", t:"Son dernier ouvrage, paru aux PUF, a reçu le Grand Prix d'histoire politique de l'Académie française."},
+      {l:"Statut", t:"Professeur des universités à Sciences Po Paris, il dirige une équipe de 8 chercheurs."},
+      {l:"Enjeu", t:"Ses recherches portent sur la mémoire de la collaboration et les processus de réconciliation nationale."}
+    ],
+    choices:["Philosophie analytique","Histoire contemporaine","Démographie","Droit constitutionnel"],
+    answer:"Histoire contemporaine",
+    bio:"Professeur des universités à Sciences Po, Jean-Baptiste est spécialiste des mémoires conflictuelles de la Seconde Guerre mondiale. Il combine histoire des institutions et histoire sociale."
+  },
+  { name:"Dr. Sofia Ramos", domain:"Linguistique computationnelle", icon:"💻",
+    hints:[
+      {l:"Domaine", t:"Elle travaille à l'interface entre sciences du langage et intelligence artificielle."},
+      {l:"Outil", t:"Elle entraîne des modèles de langue (LLM) sur des corpus multilingues pour détecter les biais culturels."},
+      {l:"Labo", t:"Son équipe est commune entre l'Inria et une université, avec des partenaires à Barcelone et Montréal."},
+      {l:"Publications", t:"Elle publie à ACL et EMNLP, les grandes conférences de traitement automatique des langues."},
+      {l:"Application", t:"Ses outils aident à détecter les discours haineux dans 12 langues sur les réseaux sociaux."}
+    ],
+    choices:["Paléographie","Linguistique computationnelle","Géographie humaine","Ethnomusicologie"],
+    answer:"Linguistique computationnelle",
+    bio:"Chercheuse Inria en traitement automatique des langues, Sofia combine expertise linguistique et machine learning. Son travail sur la détection des discours discriminatoires est utilisé par plusieurs plateformes européennes."
+  },
+  { name:"Dr. Lucas Fontaine", domain:"Anthropologie sociale", icon:"🌍",
+    hints:[
+      {l:"Domaine", t:"Il étudie les pratiques, croyances et organisations sociales d'un groupe humain par immersion prolongée."},
+      {l:"Terrain", t:"Contrairement aux clichés, son dernier terrain n'était pas en Amazonie mais dans une usine automobile en Normandie."},
+      {l:"Méthode", t:"Il a passé 14 mois à travailler sur la chaîne de montage, carnet de notes en poche."},
+      {l:"Thème", t:"Sa thèse porte sur les rituels informels, les solidarités et les formes de résistance au travail ouvrier."},
+      {l:"Statut", t:"Maître de conférences à l'EHESS, il co-dirige le séminaire Travail, corps et techniques."}
+    ],
+    choices:["Anthropologie sociale","Musicologie","Sciences de l'éducation","Géopolitique"],
+    answer:"Anthropologie sociale",
+    bio:"MCF à l'EHESS, Lucas est anthropologue du travail industriel. Ses enquêtes immersives en usine ont renouvelé les études ouvrières françaises et nourri un débat public sur la dignité au travail."
+  },
+  { name:"Dr. Nour Khalil", domain:"Psycholinguistique", icon:"🧠",
+    hints:[
+      {l:"Domaine", t:"Elle étudie les mécanismes cognitifs qui permettent aux humains d'acquérir, comprendre et produire le langage."},
+      {l:"Terrain", t:"Son laboratoire se trouve au CHU de Strasbourg, où elle travaille avec des enfants en difficulté de lecture."},
+      {l:"Méthode", t:"Elle utilise l'eye-tracking et l'EEG pour mesurer les processus de lecture à la milliseconde."},
+      {l:"Application", t:"Ses recherches alimentent des outils de dépistage précoce de la dyslexie et des programmes de remédiation."},
+      {l:"Collaborations", t:"Elle travaille en lien avec des orthophonistes, des enseignants et des neuroscientifiques."}
+    ],
+    choices:["Démographie historique","Psycholinguistique","Philosophie du droit","Économie du développement"],
+    answer:"Psycholinguistique",
+    bio:"Chercheuse en psycholinguistique développementale, Nour combine neurosciences et linguistique pour comprendre l'acquisition de la lecture. Ses outils de dépistage sont déployés dans 300 écoles en France et au Maroc."
+  }
+];
+
+var PTS = [50, 40, 30, 20, 10];
+var cur = 0, hintIdx = 0, pts = 0, answered = false;
+
+function buildDots() {
+  var html = '';
+  for (var i = 0; i < profiles.length; i++) {
+    html += '<div class="dot" id="d' + i + '"></div>';
+  }
+  document.getElementById('dots').innerHTML = html;
+}
+
+function updDots() {
+  for (var i = 0; i < profiles.length; i++) {
+    var d = document.getElementById('d' + i);
+    d.className = 'dot' + (i < cur ? ' done' : i === cur ? ' active' : '');
+  }
+}
+
+function loadProfile(i) {
+  var p = profiles[i];
+  hintIdx = 0; answered = false;
+  document.getElementById('prof-num').textContent = 'Profil ' + (i+1) + ' / ' + profiles.length;
+  document.getElementById('hints-list').innerHTML = '';
+  document.getElementById('fb-guess').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'none';
+  document.getElementById('btn-hint').style.display = 'inline-block';
+  document.getElementById('choices-area').style.display = 'block';
+  document.getElementById('reveal-box').className = 'reveal-box';
+  document.getElementById('hint-info').textContent = '';
+  var html = '';
+  for (var j = 0; j < p.choices.length; j++) {
+    html += '<div class="choice-card" onclick="guess(\'' + p.choices[j] + '\')">' + p.choices[j] + '</div>';
+  }
+  document.getElementById('choices-grid').innerHTML = html;
+  updDots();
+  showHint();
+}
+
+function showHint() {
+  var p = profiles[cur];
+  if (hintIdx >= p.hints.length) {
+    document.getElementById('btn-hint').style.display = 'none';
+    return;
+  }
+  var h = p.hints[hintIdx];
+  var el = document.createElement('div');
+  el.className = 'hint-item';
+  el.innerHTML = '<div class="hint-label">Indice ' + (hintIdx+1) + ' — ' + h.l + '</div>' + h.t;
+  document.getElementById('hints-list').appendChild(el);
+  hintIdx++;
+  document.getElementById('hint-info').textContent = hintIdx + '/' + p.hints.length + ' indice(s) — Valeur : ' + PTS[Math.min(hintIdx-1, 4)] + ' pts';
+  if (hintIdx >= p.hints.length) {
+    document.getElementById('btn-hint').style.display = 'none';
+  }
+}
+
+function guess(choice) {
+  if (answered) return;
+  answered = true;
+  var p = profiles[cur];
+  var ok = choice === p.answer;
+  var earned = ok ? PTS[Math.min(hintIdx-1, 4)] : 0;
+  pts += earned;
+  document.getElementById('pts-disp').textContent = '🏆 ' + pts + ' pts';
+  var cards = document.querySelectorAll('.choice-card');
+  for (var i = 0; i < cards.length; i++) {
+    cards[i].className = 'choice-card disabled';
+    if (cards[i].textContent.trim() === p.answer) cards[i].className = 'choice-card disabled correct';
+    else if (cards[i].textContent.trim() === choice && !ok) cards[i].className = 'choice-card disabled incorrect';
+  }
+  var fb = document.getElementById('fb-guess');
+  fb.textContent = ok ? '✅ Bravo ! +' + earned + ' points avec ' + hintIdx + ' indice(s).' : '❌ Raté — c\'était : ' + p.answer + '. 0 point.';
+  fb.className = 'feedback ' + (ok ? 'ok' : 'ko');
+  fb.style.display = 'block';
+  document.getElementById('choices-area').style.display = 'none';
+  document.getElementById('rev-icon').textContent = p.icon;
+  document.getElementById('rev-name').textContent = p.name + ' — ' + p.domain;
+  document.getElementById('rev-bio').textContent = p.bio;
+  document.getElementById('reveal-box').className = 'reveal-box active';
+  var bn = document.getElementById('btn-next');
+  bn.style.display = 'inline-block';
+  bn.textContent = cur < profiles.length - 1 ? 'Profil suivant →' : 'Voir les résultats →';
+}
+
+function nextProfile() {
+  if (cur < profiles.length - 1) { cur++; loadProfile(cur); }
+  else showFinal();
+}
+
+function showFinal() {
+  document.getElementById('game-card').style.display = 'none';
+  document.getElementById('score-card').style.display = 'block';
+  document.getElementById('final-pts').textContent = pts;
+  document.getElementById('res-title').textContent = pts >= 150 ? '🎉 Expert(e) en portraits SHS !' : '📚 Bon parcours !';
+  document.getElementById('res-msg').textContent = 'Vous avez obtenu ' + pts + ' points sur 250.';
+  document.getElementById('banner').style.display = 'block';
+}
+
+function restart() {
+  cur = 0; pts = 0;
+  document.getElementById('score-card').style.display = 'none';
+  document.getElementById('game-card').style.display = 'block';
+  document.getElementById('banner').style.display = 'none';
+  document.getElementById('pts-disp').textContent = '🏆 0 pts';
+  buildDots(); loadProfile(0);
+}
+
+buildDots(); loadProfile(0);
+</script>
+</body>
+</html>
